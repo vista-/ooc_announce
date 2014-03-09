@@ -20,23 +20,19 @@ namespace sendkeys_ss13
         public static extern bool SetForegroundWindow(IntPtr WindowHandle);
         public const int SW_RESTORE = 9;
 
-       
-
-
-        public static void Main(string[]args) {
-            
-
-    		irc.OnChannelMessage += new IrcEventHandler(OnChannelMessage);
-			irc.SupportNonRfc = true;
-			irc.Connect("irc.rizon.net" , 6670);
-			Console.WriteLine("{DBG} Connected to IRC");
-			irc.Login("vista_fun_bot", "vistas_fun_bot");
-			Console.WriteLine("{DBG} Logged in");
-			irc.RfcJoin("#coderbus");
-			Console.WriteLine("{DBG} Joining #coderbus");
-			irc.Listen();
-		}
-       public static void OnChannelMessage(object sender, IrcEventArgs e) 
+        public static void Main(string[]args) 
+        { 
+            irc.OnChannelMessage += new IrcEventHandler(OnChannelMessage);
+            irc.SupportNonRfc = true;
+            irc.Connect("irc.rizon.net" , 6670);
+            Console.WriteLine("{DBG} Connected to IRC");
+            irc.Login("vista_fun_bot", "vistas_fun_bot");
+            Console.WriteLine("{DBG} Logged in");
+            irc.RfcJoin("#coderbus");
+            Console.WriteLine("{DBG} Joining #coderbus");
+            irc.Listen();
+        }
+        public static void OnChannelMessage(object sender, IrcEventArgs e) 
         {
             if(e.Data.Nick == "TheGhostOfWhibyl1")
             {
@@ -48,8 +44,7 @@ namespace sendkeys_ss13
                     if(i != msg.Length - 2)
                         new_msg += msg[i] + " ";
 			    } 
-                
-                Console.WriteLine(e.Data.Message);
+//              Console.WriteLine(e.Data.Message);
                 if(msg[2] == "opened")
                 {
                     Console.WriteLine("{0}", new_msg);
@@ -62,7 +57,6 @@ namespace sendkeys_ss13
                         SetForegroundWindow(objProcesses[0].MainWindowHandle);
                         SendKeys.SendWait("ooc " + new_msg + "{ENTER}");
                     }
-
                 }
             }
         }
