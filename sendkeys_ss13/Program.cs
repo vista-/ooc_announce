@@ -39,11 +39,13 @@ namespace sendkeys_ss13
                 string[] msg = e.Data.Message.Split(' ');
                 string new_msg = "";
                 for (int i = 0; i < msg.Length; i++)
-			    {
-			        msg[i] = Regex.Replace(msg[i], @"[\x02\x1F\x0F\x16]|\x03(\d\d?(,\d\d?)?)?", String.Empty);
-                    if(i != msg.Length - 2)
+                {
+                    msg[i] = Regex.Replace(msg[i], @"[\x02\x1F\x0F\x16]|\x03(\d\d?(,\d\d?)?)?", String.Empty);
+                    if (i != msg.Length - 2)
+                    {
                         new_msg += msg[i] + " ";
-			    } 
+                    }
+                } 
 //              Console.WriteLine(e.Data.Message);
                 if(msg[2] == "opened")
                 {
