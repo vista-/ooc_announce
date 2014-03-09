@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Diagnostics;
 using Meebey.SmartIrc4net;
+using System.Threading;
 
 namespace sendkeys_ss13
 {
@@ -28,24 +29,55 @@ namespace sendkeys_ss13
             Console.WriteLine("{DBG} Connected to IRC");
             irc.Login("vista_fun_bot", "vistas_fun_bot");
             Console.WriteLine("{DBG} Logged in");
-            irc.RfcJoin("#coderbus");
+            irc.RfcJoin("#fukkentestchannel");
             Console.WriteLine("{DBG} Joining #coderbus");
             irc.Listen();
         }
         public static void OnChannelMessage(object sender, IrcEventArgs e) 
         {
-            if(e.Data.Nick == "TheGhostOfWhibyl1")
+            if(e.Data.Nick == "vistapowa_tp")
             {
                 string[] msg = e.Data.Message.Split(' ');
                 string new_msg = "";
                 for (int i = 0; i < msg.Length; i++)
                 {
+                    
                     msg[i] = Regex.Replace(msg[i], @"[\x02\x1F\x0F\x16]|\x03(\d\d?(,\d\d?)?)?", String.Empty);
+                    char[] forbidden = {'{', '}', '[', ']', '+', '^', '%', '~', '(', ')'};
+                    bool itwasbad = false;
+                    for (int j = 0; j < msg[i].Length; j++)
+			        {
+                        if (itwasbad)
+                        {
+                            j--;
+                            itwasbad = false;
+                        }
+                        for (int k = 0; k < forbidden.Length; k++)
+                        {
+                            if(forbidden[k] == msg[i][j])
+                            {
+                                int place = msg[i].Substring(j).IndexOf(forbidden[k]);
+                                msg[i] = msg[i].Insert(j + place, "{");
+                                msg[i] = msg[i].Insert(j + place + 2, "}");
+                                if ((j + 3) <= (msg[i].Length - 1))
+                                {
+                                    j = j + 3;
+                                    itwasbad = true;
+                                }
+                                else
+                                {
+                                    j = msg[i].Length;
+                                    break;
+                                }
+                            }
+                        }
+                    }
                     if (i != msg.Length - 2)
                     {
                         new_msg += msg[i] + " ";
                     }
-                } 
+                }
+                Thread.Sleep(100);
 //              Console.WriteLine(e.Data.Message);
                 if(msg[2] == "opened")
                 {
