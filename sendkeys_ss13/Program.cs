@@ -61,7 +61,6 @@ namespace sendkeys_ss13
                     }
                 }
             }
-        }
-        
+        } 
     }
 }
