@@ -19,10 +19,34 @@ namespace sendkeys_ss13
         public static extern bool ShowWindowAsync(HandleRef hWnd, int nCmdShow);
         [DllImport("user32.dll")]
         public static extern bool SetForegroundWindow(IntPtr WindowHandle);
+        [DllImport("user32.dll")]
+        static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
+        [DllImport("user32.dll")]
+        static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam, IntPtr lParam);
         public const int SW_RESTORE = 9;
+        public const int BM_CLICK = 0x00F5;
 
+        public static bool host = false;
+
+        }
+        public static void OpMode()
+        {
+            Console.WriteLine("'host' or 'client' mode? (DreamDaemon and DreamSeeker respectively");
+            string temp = Console.ReadLine();
+            if (temp.ToLower() == "host")
+                host = true;
+            else if (temp.ToLower() == "client")
+                host = false;
+            else
+            {
+                Console.WriteLine("bad input");
+                OpMode();
+            }
+
+        }
         public static void Main(string[]args) 
-        { 
+        {
+            OpMode();
             irc.OnChannelMessage += new IrcEventHandler(OnChannelMessage);
             irc.SupportNonRfc = true;
             irc.Connect("irc.rizon.net" , 6670);
@@ -78,18 +102,42 @@ namespace sendkeys_ss13
                     }
                 }
                 Thread.Sleep(100);
-//              Console.WriteLine(e.Data.Message);
                 if(msg[2] == "opened")
                 {
                     Console.WriteLine("{0}", new_msg);
-                    Process[] objProcesses = System.Diagnostics.Process.GetProcessesByName("dreamseeker");
-                    if (objProcesses.Length > 0)
+                    Process[] clientProcess = System.Diagnostics.Process.GetProcessesByName("dreamseeker");
+                    Process[] hostProcess = System.Diagnostics.Process.GetProcessesByName("dreamdaemon");
+                    if (!host)
                     {
-                        IntPtr hWnd = IntPtr.Zero;
-                        hWnd = objProcesses[0].MainWindowHandle;
-                        ShowWindowAsync(new HandleRef(null, hWnd), SW_RESTORE);
-                        SetForegroundWindow(objProcesses[0].MainWindowHandle);
-                        SendKeys.SendWait("ooc " + new_msg + "{ENTER}");
+                        if (clientProcess.Length > 0)
+                        {
+                            IntPtr hWnd = IntPtr.Zero;
+                            hWnd = clientProcess[0].MainWindowHandle;
+                            ShowWindowAsync(new HandleRef(null, hWnd), SW_RESTORE);
+                            SetForegroundWindow(clientProcess[0].MainWindowHandle);
+                            SendKeys.SendWait("ooc " + new_msg + "{ENTER}");
+                        }
+                    }
+                    else
+                    {
+                        if(hostProcess.Length > 0)
+                        {
+                            IntPtr hWnd = IntPtr.Zero;
+                            hWnd = hostProcess[0].MainWindowHandle;
+                            
+                            List<IntPtr> children = GetAllChildrenWindowHandles(hWnd, 100);
+
+                            Console.WriteLine("Children handles are:");
+                            for (int i = 0; i < children.Count; ++i)
+                                Console.WriteLine(children[i].ToString("X"));
+                            IntPtr()
+                            IntPtr hWndPlayers = FindWindowEx(hWnd, IntPtr.Zero, "", "Players");
+                            IntPtr hWndButton = FindWindowEx(hWndPlayers, IntPtr.Zero, "Button", "Send &Announcement"); ;
+                           // ShowWindowAsync(new HandleRef(null, hWnd), SW_RESTORE);
+                           // SetForegroundWindow(hostProcess[0].MainWindowHandle);
+                            SendMessage(hWndButton, BM_CLICK, 1, IntPtr.Zero);
+                            SendKeys.SendWait("ooc " + new_msg + "{ENTER}");*/
+                        }
                     }
                 }
             }
