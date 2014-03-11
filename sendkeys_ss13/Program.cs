@@ -28,7 +28,6 @@ namespace sendkeys_ss13
 
         public static bool host = false;
 
-        }
         public static void OpMode()
         {
             Console.WriteLine("'host' or 'client' mode? (DreamDaemon and DreamSeeker respectively");
@@ -124,19 +123,12 @@ namespace sendkeys_ss13
                         {
                             IntPtr hWnd = IntPtr.Zero;
                             hWnd = hostProcess[0].MainWindowHandle;
-                            
-                            List<IntPtr> children = GetAllChildrenWindowHandles(hWnd, 100);
-
-                            Console.WriteLine("Children handles are:");
-                            for (int i = 0; i < children.Count; ++i)
-                                Console.WriteLine(children[i].ToString("X"));
-                            IntPtr()
                             IntPtr hWndPlayers = FindWindowEx(hWnd, IntPtr.Zero, "", "Players");
                             IntPtr hWndButton = FindWindowEx(hWndPlayers, IntPtr.Zero, "Button", "Send &Announcement"); ;
                            // ShowWindowAsync(new HandleRef(null, hWnd), SW_RESTORE);
                            // SetForegroundWindow(hostProcess[0].MainWindowHandle);
                             SendMessage(hWndButton, BM_CLICK, 1, IntPtr.Zero);
-                            SendKeys.SendWait("ooc " + new_msg + "{ENTER}");*/
+                            SendKeys.SendWait("ooc " + new_msg + "{ENTER}");
                         }
                     }
                 }
