@@ -3,49 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
-using System.Diagnostics;
 using Meebey.SmartIrc4net;
-using System.Threading;
+using System.Net;
+using System.Net.Sockets;
+using System.IO;
 
 namespace sendkeys_ss13
 {
     public class Program
     {
+        public static string serverIP = "127.0.0.1";
+        public static int serverPort = 7281;
+
         public static IrcClient irc = new IrcClient();
-        [DllImport("user32.dll")]
-        public static extern bool ShowWindowAsync(HandleRef hWnd, int nCmdShow);
-        [DllImport("user32.dll")]
-        public static extern bool SetForegroundWindow(IntPtr WindowHandle);
-        [DllImport("user32.dll")]
-        static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
-        [DllImport("user32.dll")]
-        static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam, IntPtr lParam);
-        public const int SW_RESTORE = 9;
-        public const int BM_CLICK = 0x00F5;
-
-        public static bool host = false;
-
-        public static void OpMode()
-        {
-            Console.WriteLine("'host' or 'client' mode? (DreamDaemon and DreamSeeker respectively");
-            string temp = Console.ReadLine();
-            if (temp.ToLower() == "host")
-                host = true;
-            else if (temp.ToLower() == "client")
-                host = false;
-            else
-            {
-                Console.WriteLine("bad input");
-                OpMode();
-            }
-
-        }
         public static void Main(string[]args) 
         {
-            OpMode();
+            ReadConf(ref serverIP, ref serverPort);
             irc.OnChannelMessage += new IrcEventHandler(OnChannelMessage);
             irc.SupportNonRfc = true;
             irc.Connect("irc.rizon.net" , 6670);
@@ -56,83 +29,71 @@ namespace sendkeys_ss13
             Console.WriteLine("{DBG} Joining #coderbus");
             irc.Listen();
         }
+
+        public static void ReadConf(ref string IP, ref int port)
+        {
+            if (File.Exists("config.ini"))
+            {
+                StreamReader reader = new StreamReader("config.ini");
+                while (!reader.EndOfStream)
+                {
+                    string[] line = reader.ReadLine().Split(' ');
+                    Match match1 = Regex.Match(line[3], @"(\d{1,3}.?){4}"); //rudimentary IP validation
+                    if (match1.Success)
+                    {
+                        serverIP = line[3];
+                    }
+                    else { Console.WriteLine("IP cannot be validated."); return; }
+                    line = reader.ReadLine().Split(' ');
+                    Match match2 = Regex.Match(line[3], @"(\d{1,5}"); //rudimentary port validation
+                    if(match1.Success && (Convert.ToInt32(line[3]) < 65535))
+                    {
+                        serverPort = Convert.ToInt32(line[3]);
+                    }
+                    else { Console.WriteLine("Port cannot be validated."); return; }
+                }
+            }
+            else { Console.WriteLine("Config file doesn't exist, using defaults"); return; }
+        }
         public static void OnChannelMessage(object sender, IrcEventArgs e) 
         {
             if(e.Data.Nick == "vistapowa_tp")
             {
                 string[] msg = e.Data.Message.Split(' ');
-                string new_msg = "";
                 for (int i = 0; i < msg.Length; i++)
                 {
-                    
-                    msg[i] = Regex.Replace(msg[i], @"[\x02\x1F\x0F\x16]|\x03(\d\d?(,\d\d?)?)?", String.Empty);
-                    char[] forbidden = {'{', '}', '[', ']', '+', '^', '%', '~', '(', ')'};
-                    bool itwasbad = false;
-                    for (int j = 0; j < msg[i].Length; j++)
-			        {
-                        if (itwasbad)
-                        {
-                            j--;
-                            itwasbad = false;
-                        }
-                        for (int k = 0; k < forbidden.Length; k++)
-                        {
-                            if(forbidden[k] == msg[i][j])
-                            {
-                                int place = msg[i].Substring(j).IndexOf(forbidden[k]);
-                                msg[i] = msg[i].Insert(j + place, "{");
-                                msg[i] = msg[i].Insert(j + place + 2, "}");
-                                if ((j + 3) <= (msg[i].Length - 1))
-                                {
-                                    j = j + 3;
-                                    itwasbad = true;
-                                }
-                                else
-                                {
-                                    j = msg[i].Length;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    if (i != msg.Length - 2)
-                    {
-                        new_msg += msg[i] + " ";
-                    }
+                    msg[i] = Regex.Replace(msg[i], @"[\x02\x1F\x0F\x16]|\x03(\d\d?(,\d\d?)?)?", String.Empty); //Sanitizing color codes
                 }
-                Thread.Sleep(100);
-                if(msg[2] == "opened")
-                {
-                    Console.WriteLine("{0}", new_msg);
-                    Process[] clientProcess = System.Diagnostics.Process.GetProcessesByName("dreamseeker");
-                    Process[] hostProcess = System.Diagnostics.Process.GetProcessesByName("dreamdaemon");
-                    if (!host)
-                    {
-                        if (clientProcess.Length > 0)
-                        {
-                            IntPtr hWnd = IntPtr.Zero;
-                            hWnd = clientProcess[0].MainWindowHandle;
-                            ShowWindowAsync(new HandleRef(null, hWnd), SW_RESTORE);
-                            SetForegroundWindow(clientProcess[0].MainWindowHandle);
-                            SendKeys.SendWait("ooc " + new_msg + "{ENTER}");
-                        }
-                    }
-                    else
-                    {
-                        if(hostProcess.Length > 0)
-                        {
-                            IntPtr hWnd = IntPtr.Zero;
-                            hWnd = hostProcess[0].MainWindowHandle;
-                            IntPtr hWndPlayers = FindWindowEx(hWnd, IntPtr.Zero, "", "Players");
-                            IntPtr hWndButton = FindWindowEx(hWndPlayers, IntPtr.Zero, "Button", "Send &Announcement"); ;
-                           // ShowWindowAsync(new HandleRef(null, hWnd), SW_RESTORE);
-                           // SetForegroundWindow(hostProcess[0].MainWindowHandle);
-                            SendMessage(hWndButton, BM_CLICK, 1, IntPtr.Zero);
-                            SendKeys.SendWait("ooc " + new_msg + "{ENTER}");
-                        }
-                    }
-                }
+                byte[] PACKETS = CreatePacket(msg);
+                TcpClient client = new TcpClient(serverIP, serverPort);
+                NetworkStream stream = client.GetStream();
+                stream.Write(PACKETS, 0, PACKETS.Length);
+                stream.Close();
+                client.Close();
             }
+        }
+
+        private static byte[] CreatePacket(string[] msg)
+        {
+            StringBuilder packet = new StringBuilder();
+            packet.Append('\x00');
+            packet.Append('\x87');
+            int len = 0;
+            for (int i = 0; i < msg.Length; i++)
+            {
+                len += msg[i].Length;
+            }
+            packet.Append((char)(len + 6));
+            for (int i = 0; i < 6; i++)
+            {
+                packet.Append('\x00');
+            }
+            for (int i = 0; i < msg.Length; i++)
+            {
+                packet.Append(msg[i]);
+            }
+            packet.Append('\x00');
+            return Encoding.ASCII.GetBytes(packet.ToString()); 
         } 
     }
 }
