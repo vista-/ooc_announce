@@ -168,20 +168,21 @@ namespace sendkeys_ss13
                     msg[i] = Regex.Replace(msg[i], @"[\\\&\=\;\<\>]", " "); //Filtering out some iffy characters
                     Console.Write(msg[i] + " ");
                 }
-                string URL = ShortenURL(msg[msg.Length - 1]);
-                msg[5] = "<a href=" + URL + ">" + msg[5] + "</a>";
-                msg[0] = ""; //Stripping the useless string parts.
-                msg[msg.Length - 1] = "";
                 if (msg[2] == "opened")
                 {
+                    string URL = ShortenURL(msg[msg.Length - 1]);
+                    msg[5] = "<a href=" + URL + ">" + msg[5] + "</a>";
+                    msg[0] = ""; //Stripping the useless string parts.
+                    msg[msg.Length - 1] = "";
                     byte[] PACKETS = CreatePacket(msg);
                     PACKETS[1] = 0x83;
                     int len = 0;
-                    for (int i = 0; i < msg.Length; i++)
+                    for (int i = 1; i < msg.Length; i++)
                     {
-                        len += msg[i].Length + 1;
+                        len += msg[i].Length + 1; //The length of the word and the space following it.
                     }
-                    len += 14 + commskey.Length + 6;
+                    len -= 1; //Compensating for the lack of space at the end.
+                    len += 14 + commskey.Length + 6; //Argument names + Commskey length + 6 null bytes
                     PACKETS[3] = (byte) len;
                                 
                     StringBuilder test = new StringBuilder();
@@ -196,6 +197,7 @@ namespace sendkeys_ss13
                     server.Connect(ip);
                     server.Send(PACKETS);
                     output.Close();
+                    Console.WriteLine("sent ;)");
                 }
             }
         }
@@ -222,9 +224,12 @@ namespace sendkeys_ss13
             packet.Append((char)x83);
             packet.Append((char)'\x00',6);
             packet.Append("?announce=");
-            for (int i = 0; i < msg.Length; i++)
+            for (int i = 1; i < msg.Length; i++)
             {
-                packet.Append(msg[i] + " ");
+                if(i == msg.Length - 1)
+                    packet.Append(msg[i]);
+                else 
+                    packet.Append(msg[i] + " ");
             }
             packet.Append("&key=");
             packet.Append(commskey);
