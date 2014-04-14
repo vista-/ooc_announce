@@ -38,6 +38,9 @@ namespace sendkeys_ss13
         public static int IRC_port = 11111;
         public static string IRC_channel = "#channel";
 
+        public static string[] merge_archive;
+        public static bool mergeflag = false;
+
         public static IrcClient irc = new IrcClient();
         public static void Main(string[]args) 
         {
@@ -166,10 +169,21 @@ namespace sendkeys_ss13
                 {
                     msg[i] = Regex.Replace(msg[i], @"[\x02\x1F\x0F\x16]|\x03(\d\d?(,\d\d?)?)?", String.Empty); //Sanitizing color codes
                     msg[i] = Regex.Replace(msg[i], @"[\\\&\=\;\<\>]", " "); //Filtering out some iffy characters
-                    Console.Write(msg[i] + " ");
                 }
-                if (msg[2] == "opened")
+                if (msg[2] == "closed")
                 {
+                    merge_archive = msg;
+                    mergeflag = true;
+                    output.Close();
+                }
+                else if ((msg[2] == "opened" || mergeflag) && msg[1] != "meant:") //Either we open a new PR or a PR was closed in the last message. Also protection from Whibyl's correction thingy!
+                {
+                    if(msg[2] == "pushed")
+                    {
+                        msg = merge_archive; //We copy the "close" message and replace "close" with merge! The players won't know what him 'em!
+                        msg[2] = "merged";
+                    }
+                    mergeflag = false;
                     string URL = ShortenURL(msg[msg.Length - 1]);
                     msg[5] = "<a href=" + URL + ">" + msg[5] + "</a>";
                     msg[0] = ""; //Stripping the useless string parts.
@@ -180,6 +194,7 @@ namespace sendkeys_ss13
                     for (int i = 1; i < msg.Length; i++)
                     {
                         len += msg[i].Length + 1; //The length of the word and the space following it.
+                        Console.Write(msg[i] + " ");
                     }
                     len -= 1; //Compensating for the lack of space at the end.
                     len += 14 + commskey.Length + 6; //Argument names + Commskey length + 6 null bytes
@@ -197,7 +212,14 @@ namespace sendkeys_ss13
                     server.Connect(ip);
                     server.Send(PACKETS);
                     output.Close();
-                    Console.WriteLine("sent ;)");
+                    Console.WriteLine("- sent ;)");
+                    Console.WriteLine();
+                }
+                else 
+                {
+                    mergeflag = false;
+                    merge_archive = null;
+                    output.Close();
                 }
             }
         }
