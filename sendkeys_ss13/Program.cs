@@ -184,6 +184,7 @@ namespace sendkeys_ss13
                         msg[2] = "merged";
                     }
                     mergeflag = false;
+                    merge_archive = null;
                     string URL = ShortenURL(msg[msg.Length - 1]);
                     msg[5] = "<a href=" + URL + ">" + msg[5] + "</a>";
                     msg[0] = ""; //Stripping the useless string parts.
