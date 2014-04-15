@@ -219,12 +219,13 @@ namespace sendkeys_ss13
                     if(!ShortenedURL)
                         URL = ShortenURL(URL);
                     msg[5] = "<a href=" + URL + ">" + msg[5] + "</a>";
-                    msg[0] = ""; //Stripping the useless string parts.
-                    msg[msg.Length - 1] = "";
+                    msg[0] = ""; //Repo name
+                    msg[msg.Length - 1] = ""; //The URL itself
+                    msg[msg.Length - 2] = ""; //Branch info
                     byte[] PACKETS = CreatePacket(msg);
                     PACKETS[1] = 0x83;
                     int len = 0;
-                    for (int i = 1; i < msg.Length; i++)
+                    for (int i = 1; i < msg.Length - 1; i++)
                     {
                         len += msg[i].Length + 1; //The length of the word and the space following it.
                         Console.Write(msg[i] + " ");
@@ -324,9 +325,9 @@ namespace sendkeys_ss13
             StringBuilder packet = new StringBuilder();
             packet.Append((char)'\x00', 8); //packet[1] is 0x83, packet[3] contain length
             packet.Append("?announce=");
-            for (int i = 1; i < msg.Length; i++)
+            for (int i = 1; i < msg.Length - 1; i++)
             {
-                if(i == msg.Length - 1)
+                if(i == msg.Length - 2)
                     packet.Append(msg[i]);
                 else 
                     packet.Append(msg[i] + " ");
